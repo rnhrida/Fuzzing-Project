@@ -3,18 +3,20 @@
 #include <string.h>
 #include <stdlib.h>
 
-// Simulates a vulnerable kernel network packet parser
-static void parse_packet(const uint8_t *data, size_t size) {
-    uint32_t packet_len = *(uint32_t*)data;
-    char *buf = (char*)malloc(64);
-    // BUG: if packet_len > 64, this overflows = HEAP-BUFFER-OVERFLOW
-    memcpy(buf, data + 4, packet_len);
-    free(buf);
+// Vulnerable buffer - only 64 bytes
+char global_buf[64];
+
+// Vulnerable function - no bounds check
+void parse_packet(const uint8_t *data, size_t size) {
+    if (size < 4) return;
+    uint32_t len = *(uint32_t*)data;
+    // BUG: len can be > 64 = OVERFLOW!
+    memcpy(global_buf, data + 4, len);
 }
 
-// AFL++ calls this for every fuzz input
+// Correct AFL++ entry point - NO main()
 extern "C" int LLVMFuzzerTestOneInput(const uint8_t *data, size_t size) {
-    if (size < 5) return 0;
+    if (size < 5 || size > 200) return 0;
     parse_packet(data, size);
     return 0;
 }
