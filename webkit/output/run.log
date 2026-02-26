@@ -1,0 +1,68 @@
+INFO: Running with entropic power schedule (0xFF, 100).
+INFO: Seed: 1551349505
+INFO: Loaded 1 modules   (4 inline 8-bit counters): 4 [0x647ccb6dae88, 0x647ccb6dae8c), 
+INFO: Loaded 1 PC tables (4 PCs): 4 [0x647ccb6dae90,0x647ccb6daed0), 
+INFO:        3 files found in webkit/seeds/
+INFO: -max_len is not provided; libFuzzer will not generate inputs larger than 4096 bytes
+INFO: seed corpus: files: 3 min: 38b max: 44b total: 121b rss: 35Mb
+=================================================================
+==25542==ERROR: AddressSanitizer: stack-buffer-overflow on address 0x74345f800040 at pc 0x647ccb651cc8 bp 0x7ffcfb385030 sp 0x7ffcfb3847f0
+WRITE of size 38 at 0x74345f800040 thread T0
+    #0 0x647ccb651cc7 in __asan_memcpy (/workspaces/Fuzzing-Project/webkit/harness/webkit_fuzzer_bin+0xfecc7) (BuildId: 9c39036fe1a2241c7abf7ed6ab6087f6365a54aa)
+    #1 0x647ccb694905 in parse_html(unsigned char const*, unsigned long) /workspaces/Fuzzing-Project/webkit/harness/html_fuzzer.cc:11:5
+    #2 0x647ccb6947ab in LLVMFuzzerTestOneInput /workspaces/Fuzzing-Project/webkit/harness/html_fuzzer.cc:19:5
+    #3 0x647ccb59fc54 in fuzzer::Fuzzer::ExecuteCallback(unsigned char const*, unsigned long) (/workspaces/Fuzzing-Project/webkit/harness/webkit_fuzzer_bin+0x4cc54) (BuildId: 9c39036fe1a2241c7abf7ed6ab6087f6365a54aa)
+    #4 0x647ccb59f349 in fuzzer::Fuzzer::RunOne(unsigned char const*, unsigned long, bool, fuzzer::InputInfo*, bool, bool*) (/workspaces/Fuzzing-Project/webkit/harness/webkit_fuzzer_bin+0x4c349) (BuildId: 9c39036fe1a2241c7abf7ed6ab6087f6365a54aa)
+    #5 0x647ccb5a0f66 in fuzzer::Fuzzer::ReadAndExecuteSeedCorpora(std::vector<fuzzer::SizedFile, std::allocator<fuzzer::SizedFile>>&) (/workspaces/Fuzzing-Project/webkit/harness/webkit_fuzzer_bin+0x4df66) (BuildId: 9c39036fe1a2241c7abf7ed6ab6087f6365a54aa)
+    #6 0x647ccb5a1477 in fuzzer::Fuzzer::Loop(std::vector<fuzzer::SizedFile, std::allocator<fuzzer::SizedFile>>&) (/workspaces/Fuzzing-Project/webkit/harness/webkit_fuzzer_bin+0x4e477) (BuildId: 9c39036fe1a2241c7abf7ed6ab6087f6365a54aa)
+    #7 0x647ccb58e96f in fuzzer::FuzzerDriver(int*, char***, int (*)(unsigned char const*, unsigned long)) (/workspaces/Fuzzing-Project/webkit/harness/webkit_fuzzer_bin+0x3b96f) (BuildId: 9c39036fe1a2241c7abf7ed6ab6087f6365a54aa)
+    #8 0x647ccb5b8ff6 in main (/workspaces/Fuzzing-Project/webkit/harness/webkit_fuzzer_bin+0x65ff6) (BuildId: 9c39036fe1a2241c7abf7ed6ab6087f6365a54aa)
+    #9 0x74346182e1c9 in __libc_start_call_main csu/../sysdeps/nptl/libc_start_call_main.h:58:16
+    #10 0x74346182e28a in __libc_start_main csu/../csu/libc-start.c:360:3
+    #11 0x647ccb583954 in _start (/workspaces/Fuzzing-Project/webkit/harness/webkit_fuzzer_bin+0x30954) (BuildId: 9c39036fe1a2241c7abf7ed6ab6087f6365a54aa)
+
+Address 0x74345f800040 is located in stack of thread T0 at offset 64 in frame
+    #0 0x647ccb6947cf in parse_html(unsigned char const*, unsigned long) /workspaces/Fuzzing-Project/webkit/harness/html_fuzzer.cc:7
+
+  This frame has 1 object(s):
+    [32, 64) 'tag' (line 9) <== Memory access at offset 64 overflows this variable
+HINT: this may be a false positive if your program uses some custom stack unwind mechanism, swapcontext or vfork
+      (longjmp and C++ exceptions *are* supported)
+SUMMARY: AddressSanitizer: stack-buffer-overflow (/workspaces/Fuzzing-Project/webkit/harness/webkit_fuzzer_bin+0xfecc7) (BuildId: 9c39036fe1a2241c7abf7ed6ab6087f6365a54aa) in __asan_memcpy
+Shadow bytes around the buggy address:
+  0x74345f7ffd80: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+  0x74345f7ffe00: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+  0x74345f7ffe80: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+  0x74345f7fff00: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+  0x74345f7fff80: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+=>0x74345f800000: f1 f1 f1 f1 00 00 00 00[f3]f3 f3 f3 00 00 00 00
+  0x74345f800080: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+  0x74345f800100: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+  0x74345f800180: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+  0x74345f800200: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+  0x74345f800280: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+Shadow byte legend (one shadow byte represents 8 application bytes):
+  Addressable:           00
+  Partially addressable: 01 02 03 04 05 06 07 
+  Heap left redzone:       fa
+  Freed heap region:       fd
+  Stack left redzone:      f1
+  Stack mid redzone:       f2
+  Stack right redzone:     f3
+  Stack after return:      f5
+  Stack use after scope:   f8
+  Global redzone:          f9
+  Global init order:       f6
+  Poisoned by user:        f7
+  Container overflow:      fc
+  Array cookie:            ac
+  Intra object redzone:    bb
+  ASan internal:           fe
+  Left alloca redzone:     ca
+  Right alloca redzone:    cb
+==25542==ABORTING
+MS: 0 ; base unit: 0000000000000000000000000000000000000000
+0x3c,0x74,0x61,0x62,0x6c,0x65,0x3e,0x3c,0x74,0x72,0x3e,0x3c,0x74,0x64,0x3e,0x43,0x65,0x6c,0x6c,0x3c,0x2f,0x74,0x64,0x3e,0x3c,0x2f,0x74,0x72,0x3e,0x3c,0x2f,0x74,0x61,0x62,0x6c,0x65,0x3e,0xa,
+<table><tr><td>Cell</td></tr></table>\012
+artifact_prefix='./'; Test unit written to ./crash-583d9bd6e9ecece83a26b1785699811b883583d4
+Base64: PHRhYmxlPjx0cj48dGQ+Q2VsbDwvdGQ+PC90cj48L3RhYmxlPgo=
