@@ -12,7 +12,9 @@ jobs:
       - name: Build
         run: clang++ -fsanitize=fuzzer,address -g kernel/harness/kernel_harness.cc -o kernel_fuzzer
       - name: Fuzz
-        run: mkdir -p kernel/output && timeout 300 ./kernel_fuzzer kernel/seeds/ -max_total_time=300 2>&1 | tee kernel/output/run.log || true
+        run: |
+          mkdir -p kernel/output
+          timeout 300 ./kernel_fuzzer kernel/seeds/ -max_total_time=300 2>&1 | tee kernel/output/run.log || true
       - name: Upload
         if: always()
         uses: actions/upload-artifact@v3
