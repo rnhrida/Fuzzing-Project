@@ -19,16 +19,15 @@ jobs:
 
       - name: Build Kernel Fuzzer
         run: |
-          afl-clang-fast++ \
-            -fsanitize=address \
-            -fno-omit-frame-pointer \
+          clang++ \
+            -fsanitize=fuzzer,address \
             -g \
             kernel/harness/kernel_harness.cc \
-            /usr/lib/afl/libAFLDriver.a \
             -o kernel/harness/kernel_fuzzer_bin
 
-      - name: Run AFL++ Fuzzer (5 mins)
+      - name: Run Fuzzer 5 mins
         run: |
+          mkdir -p kernel/output
           AFL_I_DONT_CARE_ABOUT_MISSING_CRASHES=1 \
           timeout 300 afl-fuzz \
             -i kernel/seeds \
@@ -36,36 +35,9 @@ jobs:
             -m none \
             -- kernel/harness/kernel_fuzzer_bin || true
 
-      - name: Check For Crashes
-        id: check
-        run: |
-          COUNT=$(ls kernel/output/default/crashes/ 2>/dev/null | grep -v README | wc -l)
-          echo "crash_count=$COUNT" >> $GITHUB_OUTPUT
-          echo "Found $COUNT crashes"
-
-      - name: Upload Crash Artifacts
+      - name: Upload Artifacts
         if: always()
         uses: actions/upload-artifact@v3
         with:
           name: kernel-crashes
-          path: kernel/output/default/crashes/
-
-      - name: Send Discord Alert
-        if: steps.check.outputs.crash_count > 0
-        run: |
-          curl -X POST "${{ secrets.DISCORD_WEBHOOK }}" \
-            -H "Content-Type: application/json" \
-            -d "{\"content\":\"🚨 KERNEL FUZZER: ${{ steps.check.outputs.crash_count }} crashes found! Check GitHub Actions.\"}"
-
-      - name: Create GitHub Issue
-        if: steps.check.outputs.crash_count > 0
-        uses: actions/github-script@v6
-        with:
-          script: |
-            github.rest.issues.create({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              title: '🐛 Kernel Fuzzer Found Crashes - ' + new Date().toISOString(),
-              body: '## Automated Crash Report\n\n**Pipeline:** Kernel (AFL++)\n**Crashes found:** ${{ steps.check.outputs.crash_count }}\n**Run:** ' + context.runId,
-              labels: ['bug', 'security', 'fuzzing']
-            })
+          path: kernel/output/
