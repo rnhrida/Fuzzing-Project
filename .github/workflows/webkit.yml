@@ -1,0 +1,69 @@
+name: WebKit Fuzzer Pipeline
+
+on:
+  push:
+    branches: [main]
+  schedule:
+    - cron: '0 0 * * *'
+
+jobs:
+  fuzz-webkit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Install Dependencies
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y clang llvm libasan6
+
+      - name: Build WebKit Fuzzer
+        run: |
+          clang++ \
+            -fsanitize=fuzzer,address \
+            -g \
+            webkit/harness/html_fuzzer.cc \
+            -o webkit/harness/webkit_fuzzer_bin
+
+      - name: Run LibFuzzer 5 mins
+        run: |
+          ./webkit/harness/webkit_fuzzer_bin \
+            webkit/seeds/ \
+            -max_total_time=300 \
+            2>&1 | tee webkit/output/run.log || true
+
+      - name: Check Crashes
+        id: check
+        run: |
+          COUNT=$(ls crash-* 2>/dev/null | wc -l)
+          echo "crash_count=$COUNT" >> $GITHUB_OUTPUT
+          echo "Found $COUNT crashes"
+
+      - name: Upload Artifacts
+        if: always()
+        uses: actions/upload-artifact@v3
+        with:
+          name: webkit-crashes
+          path: |
+            crash-*
+            webkit/output/run.log
+
+      - name: Discord Alert
+        if: steps.check.outputs.crash_count > 0
+        run: |
+          curl -X POST "${{ secrets.DISCORD_WEBHOOK }}" \
+            -H "Content-Type: application/json" \
+            -d "{\"content\":\"🚨 WEBKIT FUZZER: ${{ steps.check.outputs.crash_count }} crashes found!\"}"
+
+      - name: Create GitHub Issue
+        if: steps.check.outputs.crash_count > 0
+        uses: actions/github-script@v6
+        with:
+          script: |
+            github.rest.issues.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title: '🐛 WebKit Crash Found - ' + new Date().toISOString(),
+              body: '**Pipeline:** WebKit LibFuzzer\n**Type:** stack-buffer-overflow\n**Run:** ' + context.runId,
+              labels: ['bug', 'security', 'fuzzing']
+            })
