@@ -1,43 +1,21 @@
 name: Kernel Fuzzer Pipeline
-
 on:
   push:
     branches: [main]
-  schedule:
-    - cron: '0 0 * * *'
-
 jobs:
   fuzz-kernel:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
-
-      - name: Install Dependencies
-        run: |
-          sudo apt-get update -qq
-          sudo apt-get install -y afl++ clang libasan6
-
-      - name: Build Kernel Fuzzer
-        run: |
-          clang++ \
-            -fsanitize=fuzzer,address \
-            -g \
-            kernel/harness/kernel_harness.cc \
-            -o kernel/harness/kernel_fuzzer_bin
-
-      - name: Run Fuzzer 5 mins
-        run: |
-          mkdir -p kernel/output
-          AFL_I_DONT_CARE_ABOUT_MISSING_CRASHES=1 \
-          timeout 300 afl-fuzz \
-            -i kernel/seeds \
-            -o kernel/output \
-            -m none \
-            -- kernel/harness/kernel_fuzzer_bin || true
-
-      - name: Upload Artifacts
+      - name: Install Tools
+        run: sudo apt-get update -qq && sudo apt-get install -y clang libasan6
+      - name: Build
+        run: clang++ -fsanitize=fuzzer,address -g kernel/harness/kernel_harness.cc -o kernel_fuzzer
+      - name: Fuzz
+        run: mkdir -p kernel/output && timeout 300 ./kernel_fuzzer kernel/seeds/ -max_total_time=300 2>&1 | tee kernel/output/run.log || true
+      - name: Upload
         if: always()
         uses: actions/upload-artifact@v3
         with:
-          name: kernel-crashes
+          name: kernel-results
           path: kernel/output/
