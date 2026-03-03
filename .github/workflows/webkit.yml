@@ -8,9 +8,10 @@ jobs:
     steps:
       - uses: actions/checkout@v3
       - name: Install Tools
-        run: sudo apt-get update -qq && sudo apt-get install -y clang libasan6
+        run: sudo apt-get update -qq && sudo apt-get install -y clang
       - name: Build
-        run: clang++ -fsanitize=fuzzer,address -g webkit/harness/html_fuzzer.cc -o webkit_fuzzer
+        run: |
+          clang++ -fsanitize=fuzzer,address -g webkit/harness/html_fuzzer.cc -o webkit_fuzzer
       - name: Fuzz
         run: |
           mkdir -p webkit/output
