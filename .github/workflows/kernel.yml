@@ -8,16 +8,18 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Install Tools
-        run: sudo apt-get update -qq && sudo apt-get install -y clang
+        run: sudo apt-get update -qq && sudo apt-get install -y clang afl++
       - name: Build
         run: clang++ -fsanitize=fuzzer,address -g kernel/harness/kernel_harness.cc -o kernel_fuzzer
       - name: Fuzz
         run: |
           mkdir -p kernel/output
-          timeout 300 ./kernel_fuzzer kernel/seeds/ -max_total_time=300 2>&1 | tee kernel/output/run.log || true
+          AFL_I_DONT_CARE_ABOUT_MISSING_CRASHES=1 timeout 300 ./kernel_fuzzer kernel/seeds/ -max_total_time=300 2>&1 | tee kernel/output/run.log || true
       - name: Upload
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: kernel-results
-          path: kernel/output/
+          path: |
+            kernel/output/run.log
+            crash-*
