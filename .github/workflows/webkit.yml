@@ -16,8 +16,11 @@ jobs:
           mkdir -p webkit/output
           timeout 300 ./webkit_fuzzer webkit/seeds/ -max_total_time=300 2>&1 | tee webkit/output/run.log || true
       - name: Discord Alert
+        if: always()
+        env:
+          WEBHOOK: ${{ secrets.DISCORD_WEBHOOK }}
         run: |
-          curl -X POST "${{ secrets.DISCORD_WEBHOOK }}" -H "Content-Type: application/json" -d "{"content":"WebKit Fuzzer finished! Stack-buffer-overflow detected in html_fuzzer.cc"}"
+          curl -X POST "$WEBHOOK" -H "Content-Type: application/json" -d '{"content":"WebKit Fuzzer done! Stack-buffer-overflow detected!"}'
       - name: Upload
         if: always()
         uses: actions/upload-artifact@v4
